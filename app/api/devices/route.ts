@@ -17,6 +17,8 @@ export async function GET() {
         threshold: true,
         lastMoisture: true,
         lastSeen: true,
+        lastTemperature: true,
+        lastHumidity: true,
       },
     });
 

@@ -25,23 +25,27 @@ model Device {
   ownerId      String   @db.ObjectId
   owner        User     @relation(fields: [ownerId], references: [id])
   secret       String
-  threshold    Int?
-  lastMoisture Int?
-  pumpOn       Boolean?
-  lastSeen     DateTime?
-  updatedAt    DateTime @updatedAt
+  threshold      Int?
+  lastMoisture   Int?
+  lastTemperature Float?  // Last recorded temperature in Celsius
+  lastHumidity    Float?   // Last recorded humidity percentage
+  pumpOn         Boolean?
+  lastSeen       DateTime?
+  updatedAt      DateTime @updatedAt
 
   telemetry Telemetry[]
   commands  Command[]
 }
 
 model Telemetry {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  deviceId String   @db.ObjectId
-  device   Device   @relation(fields: [deviceId], references: [id])
-  at       DateTime
-  moisture Int
-  pumpOn   Boolean?
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  deviceId   String   @db.ObjectId
+  device     Device   @relation(fields: [deviceId], references: [id])
+  at         DateTime
+  moisture   Int
+  temperature Float?  // Temperature in Celsius
+  humidity   Float?   // Humidity percentage
+  pumpOn     Boolean?
 }
 
 model Command {

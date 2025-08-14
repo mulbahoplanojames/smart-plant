@@ -30,6 +30,7 @@ import { fetchJSON } from "@/lib/fetch-json";
 import { useRouter } from "next/navigation";
 import { SensorGauge } from "@/components/sensor-gauge";
 import { SensorTrend } from "@/components/sensor-trend";
+import { DeviceStatus } from "@/components/device-status";
 import {
   Select,
   SelectContent,
@@ -37,43 +38,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DeviceStatus } from "@/components/device-status";
 
 type Telemetry = {
   at: string;
   moisture: number;
+  temperature?: number | null;
+  humidity?: number | null;
   pumpOn: boolean;
 };
 
-// Extended telemetry with simulated values
-type ExtendedTelemetry = Telemetry & {
-  humidity?: number;
-  temperature?: number;
-  pH?: number;
-  batteryLevel?: number;
+type Device = {
+  id: string;
+  name: string;
+  threshold?: number | null;
+  lastMoisture?: number | null;
+  lastTemperature?: number | null;
+  lastHumidity?: number | null;
+  lastSeen?: string | null;
 };
 
 export default function DashboardPage() {
-  const [devices, setDevices] = useState<Array<{ id: string; name: string }>>(
-    []
-  );
+  const [devices, setDevices] = useState<Device[]>([]);
   const [deviceId, setDeviceId] = useState("demo-device-1");
   const [moisture, setMoisture] = useState<number | null>(null);
+  const [temperature, setTemperature] = useState<number | null>(null);
+  const [humidity, setHumidity] = useState<number | null>(null);
   const [pumpOn, setPumpOn] = useState(false);
   const [history, setHistory] = useState<Telemetry[]>([]);
-  const [extendedHistory, setExtendedHistory] = useState<ExtendedTelemetry[]>(
-    []
-  );
-  const [lowThreshold, setLowThreshold] = useState(316);
+  const [lowThreshold, setLowThreshold] = useState(35);
   const [connected, setConnected] = useState(false);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const esRef = useRef<EventSource | null>(null);
 
-  // Simulated sensor values
-  const [humidity, setHumidity] = useState<number | null>(null);
-  const [temperature, setTemperature] = useState<number | null>(null);
+  // Simulated sensor values (only for pH and battery since they're not in the API yet)
   const [pH, setPH] = useState<number | null>(null);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
 
@@ -86,9 +85,7 @@ export default function DashboardPage() {
   useEffect(() => {
     // Load available devices
     const loadDevices = async () => {
-      const res = await fetchJSON<{
-        data: Array<{ id: string; name: string }>;
-      }>("/api/devices");
+      const res = await fetchJSON<{ data: Device[] }>("/api/devices");
       if (res.ok && res.data?.data) {
         setDevices(res.data.data);
         if (res.data.data.length > 0 && !deviceId) {
@@ -114,33 +111,39 @@ export default function DashboardPage() {
       const rows = res.data?.data || [];
       setHistory(rows);
 
-      // Generate extended telemetry with simulated values
-      const extended = rows.map((row) => {
-        const date = new Date(row.at);
-        const hour = date.getHours();
+      if (rows.length) {
+        const latest = rows[rows.length - 1];
+        setMoisture(latest.moisture);
+        setTemperature(latest.temperature || null);
+        setHumidity(latest.humidity || null);
+        setPumpOn(!!latest.pumpOn);
+        setLastSeen(latest.at);
 
-        // Simulate values based on time of day and some randomness
-        const humidity = Math.min(
-          95,
-          Math.max(
-            40,
-            70 +
-              Math.sin((hour / 24) * Math.PI * 2) * 15 +
-              (Math.random() * 10 - 5)
-          )
-        );
+        // Calculate trends (24h change) for real sensor data
+        if (rows.length > 24) {
+          const prev = rows[rows.length - 25]; // ~24h ago
+          setMoistureTrend(latest.moisture - prev.moisture);
+          if (
+            latest.humidity !== null &&
+            latest.humidity !== undefined &&
+            prev.humidity !== null &&
+            prev.humidity !== undefined
+          ) {
+            setHumidityTrend(latest.humidity - prev.humidity);
+          }
+          if (
+            latest.temperature !== null &&
+            latest.temperature !== undefined &&
+            prev.temperature !== null &&
+            prev.temperature !== undefined
+          ) {
+            setTemperatureTrend(latest.temperature - prev.temperature);
+          }
+        }
 
-        const temperature = Math.min(
-          35,
-          Math.max(
-            15,
-            22 +
-              Math.sin((hour / 24) * Math.PI * 2) * 5 +
-              (Math.random() * 4 - 2)
-          )
-        );
-
-        const pH = Math.min(
+        // Still simulate pH and battery since they're not in the API
+        const hour = new Date(latest.at).getHours();
+        const simPH = Math.min(
           8,
           Math.max(
             5,
@@ -149,57 +152,33 @@ export default function DashboardPage() {
               (Math.random() * 0.4 - 0.2)
           )
         );
-
-        // Battery decreases over time
-        const batteryLevel = Math.max(
+        const simBattery = Math.max(
           20,
-          100 - ((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 7)) * 10
+          100 -
+            ((Date.now() - new Date(latest.at).getTime()) /
+              (1000 * 60 * 60 * 24 * 7)) *
+              10
         );
-
-        return {
-          ...row,
-          humidity: Math.round(humidity * 10) / 10,
-          temperature: Math.round(temperature * 10) / 10,
-          pH: Math.round(pH * 10) / 10,
-          batteryLevel: Math.round(batteryLevel),
-        };
-      });
-
-      setExtendedHistory(extended);
-
-      if (rows.length) {
-        const latest = rows[rows.length - 1];
-        setMoisture(latest.moisture);
-        setPumpOn(!!latest.pumpOn);
-        setLastSeen(latest.at);
-
-        // Set latest simulated values
-        if (extended.length) {
-          const latestExt = extended[extended.length - 1];
-          setHumidity(latestExt.humidity || null);
-          setTemperature(latestExt.temperature || null);
-          setPH(latestExt.pH || null);
-          setBatteryLevel(latestExt.batteryLevel || null);
-
-          // Calculate trends (24h change)
-          if (extended.length > 24) {
-            const prev = extended[extended.length - 25]; // ~24h ago
-            setMoistureTrend(latestExt.moisture - prev.moisture);
-            setHumidityTrend((latestExt.humidity || 0) - (prev.humidity || 0));
-            setTemperatureTrend(
-              (latestExt.temperature || 0) - (prev.temperature || 0)
-            );
-            setPHTrend((latestExt.pH || 0) - (prev.pH || 0));
-          }
-        }
+        setPH(Math.round(simPH * 10) / 10);
+        setBatteryLevel(Math.round(simBattery));
       }
 
-      const devs = await fetchJSON<{ data: any[] }>("/api/devices");
+      const devs = await fetchJSON<{ data: Device[] }>("/api/devices");
       if (devs.ok) {
         const d = devs.data?.data?.find((x: any) => x.id === deviceId);
         if (d) {
-          setLowThreshold(d.threshold ?? 316);
+          setLowThreshold(d.threshold ?? 35);
           setLastSeen(d.lastSeen || lastSeen);
+          // Set current values from device if available
+          if (d.lastMoisture !== null && d.lastMoisture !== undefined) {
+            setMoisture(d.lastMoisture);
+          }
+          if (d.lastTemperature !== null && d.lastTemperature !== undefined) {
+            setTemperature(d.lastTemperature);
+          }
+          if (d.lastHumidity !== null && d.lastHumidity !== undefined) {
+            setHumidity(d.lastHumidity);
+          }
         }
       }
       setLoading(false);
@@ -231,73 +210,25 @@ export default function DashboardPage() {
         if (rows.length) {
           setHistory((prev) => [...prev, ...rows].slice(-200));
 
-          // Generate extended telemetry with simulated values for new rows
-          const extended = rows.map((row) => {
-            const date = new Date(row.at);
-            const hour = date.getHours();
-
-            // Simulate values based on time of day and some randomness
-            const humidity = Math.min(
-              95,
-              Math.max(
-                40,
-                70 +
-                  Math.sin((hour / 24) * Math.PI * 2) * 15 +
-                  (Math.random() * 10 - 5)
-              )
-            );
-
-            const temperature = Math.min(
-              35,
-              Math.max(
-                15,
-                22 +
-                  Math.sin((hour / 24) * Math.PI * 2) * 5 +
-                  (Math.random() * 4 - 2)
-              )
-            );
-
-            const pH = Math.min(
-              8,
-              Math.max(
-                5,
-                6.5 +
-                  Math.sin((hour / 12) * Math.PI) * 0.5 +
-                  (Math.random() * 0.4 - 0.2)
-              )
-            );
-
-            // Battery decreases over time
-            const batteryLevel = Math.max(
-              20,
-              100 -
-                ((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 7)) * 10
-            );
-
-            return {
-              ...row,
-              humidity: Math.round(humidity * 10) / 10,
-              temperature: Math.round(temperature * 10) / 10,
-              pH: Math.round(pH * 10) / 10,
-              batteryLevel: Math.round(batteryLevel),
-            };
-          });
-
-          setExtendedHistory((prev) => [...prev, ...extended].slice(-200));
-
           const latest = rows[rows.length - 1];
           setMoisture(latest.moisture);
+          setTemperature(latest.temperature || null);
+          setHumidity(latest.humidity || null);
           setPumpOn(!!latest.pumpOn);
           setLastSeen(latest.at);
 
-          // Set latest simulated values
-          if (extended.length) {
-            const latestExt = extended[extended.length - 1];
-            setHumidity(latestExt.humidity || null);
-            setTemperature(latestExt.temperature || null);
-            setPH(latestExt.pH || null);
-            setBatteryLevel(latestExt.batteryLevel || null);
-          }
+          // Update simulated pH (still not in API)
+          const hour = new Date(latest.at).getHours();
+          const simPH = Math.min(
+            8,
+            Math.max(
+              5,
+              6.5 +
+                Math.sin((hour / 12) * Math.PI) * 0.5 +
+                (Math.random() * 0.4 - 0.2)
+            )
+          );
+          setPH(Math.round(simPH * 10) / 10);
         }
       } catch {
         // ignore
@@ -374,7 +305,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Primary metrics */}
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 gap-4">
         <Card className="card-elevated">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base">Soil Moisture</CardTitle>
@@ -391,7 +322,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="text-4xl font-bold">{moisture ?? "--"}</div>
-                <div className="text-muted-foreground">% - Value</div>
+                <div className="text-muted-foreground">%</div>
               </div>
               <SensorTrend value={moistureTrend} />
             </div>
@@ -415,10 +346,12 @@ export default function DashboardPage() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="text-4xl font-bold">{humidity ?? "--"}</div>
+                <div className="text-4xl font-bold">
+                  {humidity?.toFixed(1) ?? "--"}
+                </div>
                 <div className="text-muted-foreground">%</div>
               </div>
-              <SensorTrend value={humidityTrend} />
+              <SensorTrend value={humidityTrend} precision={1} />
             </div>
             <div className="mt-4">
               <SensorGauge
@@ -441,10 +374,12 @@ export default function DashboardPage() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="text-4xl font-bold">{temperature ?? "--"}</div>
+                <div className="text-4xl font-bold">
+                  {temperature?.toFixed(1) ?? "--"}
+                </div>
                 <div className="text-muted-foreground">°C</div>
               </div>
-              <SensorTrend value={temperatureTrend} />
+              <SensorTrend value={temperatureTrend} precision={1} />
             </div>
             <div className="mt-4">
               <SensorGauge
