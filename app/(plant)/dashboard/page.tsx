@@ -262,9 +262,9 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6 px-4 md:px-6">
       {/* Device selector */}
-      <Card className="card-elevated">
+      <Card className="">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Smart Plant Dashboard</CardTitle>
           <CardDescription>
@@ -305,7 +305,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Primary metrics */}
-      <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 gap-4">
+      <div className="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4">
         <Card className="card-elevated">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base">Soil Moisture</CardTitle>

@@ -5,9 +5,13 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({} as any));
     const deviceId =
-      (body.deviceId as string) || req.headers.get("x-device-id") || "";
+      (body.deviceId as string) ||
+      req.headers.get("689cac6e579924db1cbc9e06") ||
+      "";
     const secret =
-      (body.secret as string) || req.headers.get("x-device-secret") || "";
+      (body.secret as string) ||
+      req.headers.get("a7fy2hhaem1worpwgpz95n9ie9v58q5q") ||
+      "";
     const moisture = Number(body.moisture);
     const temperature =
       body.temperature !== undefined ? Number(body.temperature) : undefined;
