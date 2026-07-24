@@ -12,7 +12,7 @@ What’s inside
 
 Prerequisites
 - Node 18+
-- A MongoDB connection string (Atlas recommended)
+- A MongoDB connection string 
 
 Environment variables
 - DATABASE_URL: MongoDB URI (e.g., `mongodb+srv://user:pass@cluster/dbname?retryWrites=true&w=majority`)
