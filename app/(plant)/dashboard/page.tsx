@@ -101,10 +101,9 @@ export default function DashboardPage() {
     const load = async () => {
       setLoading(true);
       const res = await fetchJSON<{ data: Telemetry[] }>(
-        `/api/telemetry?deviceId=${encodeURIComponent(deviceId)}&limit=100`
+        `/api/telemetry?deviceId=${encodeURIComponent(deviceId)}&limit=100`,
       );
       if (!res.ok) {
-        if (res.status === 401) router.push("/login");
         setLoading(false);
         return;
       }
@@ -149,15 +148,15 @@ export default function DashboardPage() {
             5,
             6.5 +
               Math.sin((hour / 12) * Math.PI) * 0.5 +
-              (Math.random() * 0.4 - 0.2)
-          )
+              (Math.random() * 0.4 - 0.2),
+          ),
         );
         const simBattery = Math.max(
           20,
           100 -
             ((Date.now() - new Date(latest.at).getTime()) /
               (1000 * 60 * 60 * 24 * 7)) *
-              10
+              10,
         );
         setPH(Math.round(simPH * 10) / 10);
         setBatteryLevel(Math.round(simBattery));
@@ -200,7 +199,7 @@ export default function DashboardPage() {
     }
 
     const es = new EventSource(
-      `/api/telemetry/stream?deviceId=${encodeURIComponent(deviceId)}`
+      `/api/telemetry/stream?deviceId=${encodeURIComponent(deviceId)}`,
     );
     es.onopen = () => setConnected(true);
     es.onerror = () => setConnected(false);
@@ -225,8 +224,8 @@ export default function DashboardPage() {
               5,
               6.5 +
                 Math.sin((hour / 12) * Math.PI) * 0.5 +
-                (Math.random() * 0.4 - 0.2)
-            )
+                (Math.random() * 0.4 - 0.2),
+            ),
           );
           setPH(Math.round(simPH * 10) / 10);
         }
@@ -245,7 +244,7 @@ export default function DashboardPage() {
   const avg = useMemo(() => {
     if (!history.length) return 0;
     return Math.round(
-      history.reduce((a, b) => a + b.moisture, 0) / history.length
+      history.reduce((a, b) => a + b.moisture, 0) / history.length,
     );
   }, [history]);
 
@@ -446,7 +445,7 @@ export default function DashboardPage() {
                 <div className="text-sm">
                   {history.findLast((h) => h.pumpOn)?.at
                     ? new Date(
-                        history.findLast((h) => h.pumpOn)!.at
+                        history.findLast((h) => h.pumpOn)!.at,
                       ).toLocaleString()
                     : "—"}
                 </div>

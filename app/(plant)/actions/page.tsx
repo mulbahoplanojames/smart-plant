@@ -58,10 +58,9 @@ export default function ActionsPage() {
   const load = async () => {
     setLoading(true);
     const res = await fetchJSON<{ data?: Action[]; error?: string }>(
-      "/api/actions/list"
+      "/api/actions/list",
     );
     if (!res.ok) {
-      if (res.status === 401) router.push("/login");
       setLoading(false);
       return;
     }
@@ -83,7 +82,7 @@ export default function ActionsPage() {
       filtered = filtered.filter(
         (action) =>
           action.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          action.action.toLowerCase().includes(searchTerm.toLowerCase())
+          action.action.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -347,7 +346,7 @@ export default function ActionsPage() {
                   key={action.id}
                   className={cn(
                     "p-4 hover:bg-muted/30 transition-colors",
-                    index === 0 && "bg-muted/20" // Highlight most recent
+                    index === 0 && "bg-muted/20", // Highlight most recent
                   )}
                 >
                   <div className="flex items-center justify-between">
@@ -355,7 +354,7 @@ export default function ActionsPage() {
                       <div
                         className={cn(
                           "p-2 rounded-lg bg-muted",
-                          getActionColor(action.action)
+                          getActionColor(action.action),
                         )}
                       >
                         {getActionIcon(action.action)}

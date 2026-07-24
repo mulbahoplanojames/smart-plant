@@ -17,7 +17,6 @@ export default function SettingsPage() {
     const load = async () => {
       const res = await fetchJSON<Me>("/api/users/me");
       if (!res.ok) {
-        if (res.status === 401) router.push("/login");
         return;
       }
       setMe(res.data as any);

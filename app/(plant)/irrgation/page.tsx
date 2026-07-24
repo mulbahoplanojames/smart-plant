@@ -1525,7 +1525,7 @@ export default function IrrigationPage() {
 
   const selected = useMemo(
     () => devices.find((d) => d.id === deviceId) || null,
-    [devices, deviceId]
+    [devices, deviceId],
   );
 
   // Water usage calculations
@@ -1535,7 +1535,7 @@ export default function IrrigationPage() {
       (a) =>
         a.createdAt &&
         new Date(a.createdAt).toDateString() === today &&
-        a.state === true
+        a.state === true,
     );
     return todayActions.length * 0.5; // Assume 0.5L per pump activation
   }, [actions]);
@@ -1543,7 +1543,7 @@ export default function IrrigationPage() {
   const waterUsageWeek = useMemo(() => {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const weekActions = actions.filter(
-      (a) => a.createdAt && new Date(a.createdAt) > weekAgo && a.state === true
+      (a) => a.createdAt && new Date(a.createdAt) > weekAgo && a.state === true,
     );
     return weekActions.length * 0.5;
   }, [actions]);
@@ -1564,11 +1564,10 @@ export default function IrrigationPage() {
 
   const loadDevices = async () => {
     const res = await fetchJSON<{ data?: Device[]; error?: string }>(
-      "/api/devices"
+      "/api/devices",
     );
     if (!res.ok) {
-      if (res.status === 401) router.push("/login");
-      else alert(res.error || "Failed to load devices");
+      alert(res.error || "Failed to load devices");
       return;
     }
     const list = res.data?.data || [];
@@ -1602,7 +1601,7 @@ export default function IrrigationPage() {
     const res = await fetchJSON<{ data?: ActionRow[] }>("/api/actions/list");
     if (res.ok) {
       const rows = (res.data?.data || []).filter(
-        (r) => r.deviceId === deviceId
+        (r) => r.deviceId === deviceId,
       );
       setActions(rows.slice(0, 50));
     }
@@ -1610,7 +1609,7 @@ export default function IrrigationPage() {
 
   const loadTelemetry = async () => {
     const res = await fetchJSON<{ data: Telemetry[] }>(
-      `/api/telemetry?deviceId=${encodeURIComponent(deviceId)}&limit=100`
+      `/api/telemetry?deviceId=${encodeURIComponent(deviceId)}&limit=100`,
     );
     if (res.ok) {
       const rows = res.data?.data || [];
@@ -1654,15 +1653,15 @@ export default function IrrigationPage() {
             5,
             6.5 +
               Math.sin((hour / 12) * Math.PI) * 0.5 +
-              (Math.random() * 0.4 - 0.2)
-          )
+              (Math.random() * 0.4 - 0.2),
+          ),
         );
         const simBattery = Math.max(
           20,
           100 -
             ((Date.now() - new Date(latest.at).getTime()) /
               (1000 * 60 * 60 * 24 * 7)) *
-              10
+              10,
         );
         setPH(Math.round(simPH * 10) / 10);
         setBatteryLevel(Math.round(simBattery));
@@ -1697,7 +1696,7 @@ export default function IrrigationPage() {
     }
 
     const es = new EventSource(
-      `/api/telemetry/stream?deviceId=${encodeURIComponent(deviceId)}`
+      `/api/telemetry/stream?deviceId=${encodeURIComponent(deviceId)}`,
     );
     es.onopen = () => setConnected(true);
     es.onerror = () => setConnected(false);
@@ -1721,8 +1720,8 @@ export default function IrrigationPage() {
               5,
               6.5 +
                 Math.sin((hour / 12) * Math.PI) * 0.5 +
-                (Math.random() * 0.4 - 0.2)
-            )
+                (Math.random() * 0.4 - 0.2),
+            ),
           );
           setPH(Math.round(simPH * 10) / 10);
         }
@@ -1909,7 +1908,7 @@ export default function IrrigationPage() {
             <div
               className={cn(
                 "flex items-center gap-1",
-                getEnvironmentalStatusColor()
+                getEnvironmentalStatusColor(),
               )}
             >
               {getEnvironmentalStatusIcon()}
@@ -1919,7 +1918,7 @@ export default function IrrigationPage() {
             <div
               className={cn(
                 "text-lg font-semibold capitalize",
-                getEnvironmentalStatusColor()
+                getEnvironmentalStatusColor(),
               )}
             >
               {environmentalStatus}
@@ -2201,7 +2200,7 @@ export default function IrrigationPage() {
                       value={scheduleDuration}
                       onChange={(e) =>
                         setScheduleDuration(
-                          Number.parseInt(e.target.value || "0", 10)
+                          Number.parseInt(e.target.value || "0", 10),
                         )
                       }
                       disabled={!scheduleEnabled}
@@ -2259,7 +2258,7 @@ export default function IrrigationPage() {
                       {history.length
                         ? Math.round(
                             history.reduce((a, b) => a + b.moisture, 0) /
-                              history.length
+                              history.length,
                           )
                         : 0}
                       %
@@ -2372,8 +2371,8 @@ export default function IrrigationPage() {
                             a.status === "done"
                               ? "text-green-600"
                               : a.status === "pending"
-                              ? "text-orange-600"
-                              : ""
+                                ? "text-orange-600"
+                                : "",
                           )}
                         >
                           {a.status || "pending"}

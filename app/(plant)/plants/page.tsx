@@ -65,11 +65,10 @@ export default function PlantsPage() {
   const load = async () => {
     setLoading(true);
     const res = await fetchJSON<{ data?: Plant[]; error?: string }>(
-      "/api/plants"
+      "/api/plants",
     );
     if (!res.ok) {
-      if (res.status === 401) router.push("/login");
-      else alert(`Failed to load plants: ${res.error}`);
+      alert(`Failed to load plants: ${res.error}`);
       setLoading(false);
       return;
     }
@@ -93,7 +92,7 @@ export default function PlantsPage() {
         (plant) =>
           plant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           plant.species?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          plant.deviceId?.toLowerCase().includes(searchTerm.toLowerCase())
+          plant.deviceId?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -324,7 +323,7 @@ export default function PlantsPage() {
                 value={threshold}
                 onChange={(e) =>
                   setThreshold(
-                    e.target.value === "" ? "" : Number(e.target.value)
+                    e.target.value === "" ? "" : Number(e.target.value),
                   )
                 }
                 placeholder="35"
@@ -491,14 +490,14 @@ export default function PlantsPage() {
                           <div
                             className={cn(
                               "w-2 h-2 rounded-full",
-                              plant.deviceId ? "bg-green-500" : "bg-orange-500"
+                              plant.deviceId ? "bg-green-500" : "bg-orange-500",
                             )}
                           />
                           <span
                             className={cn(
                               plant.deviceId
                                 ? "text-green-600"
-                                : "text-orange-600"
+                                : "text-orange-600",
                             )}
                           >
                             {plant.deviceId ? "Automated" : "Manual"}
