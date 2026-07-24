@@ -1,0 +1,13 @@
+{
+  "/api/devices/route": "app/api/devices/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/telemetry/route": "app/api/telemetry/route.js",
+  "/api/telemetry/stream/route": "app/api/telemetry/stream/route.js",
+  "/api/users/me/route": "app/api/users/me/route.js",
+  "/api/actions/list/route": "app/api/actions/list/route.js",
+  "/(plant)/dashboard/page": "app/(plant)/dashboard/page.js",
+  "/(plant)/actions/page": "app/(plant)/actions/page.js",
+  "/(plant)/login/page": "app/(plant)/login/page.js",
+  "/(plant)/devices/page": "app/(plant)/devices/page.js",
+  "/(plant)/signup/page": "app/(plant)/signup/page.js"
+}
